@@ -1,0 +1,175 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>云控制器设计 &mdash; OpenStackOperationsGuide 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="OpenStackOperationsGuide 1.0.1 documentation" href="../index.html" />
+    <link rel="up" title="Architecture" href="index.html" />
+    <link rel="prev" title="Architecture" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Architecture"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">OpenStackOperationsGuide 1.0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Architecture</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>云控制器设计<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>OpenStack系统可以横向做大规模的扩展，所有服务都能以分布式方式部署。但在本书中为了简化我们决定将一些服务按照集中式方式部署在一个云控制器节点上(更多架构信息，请参见“样例架构”章节)。云控制器是一个单一节点，用于部署数据库，消息队列服务，认证和权限服务，镜像管理服务，用户仪表盘和API endpoints。</p>
+<p>云控制器为多节点的OpenStack部署提供了集中式的管理系统。特别是云控制器管理用户认证并通过消息队列发送消息到所有的系统节点。在我们的样例架构中，云控制器具有一组nova-<a href="#id2"><span class="problematic" id="id3">*</span></a>组建。这些组建可以实现：显示云系统全局状态，服务间的通讯(如：用户认证)，维护数据库中云系统信息，同所有的计算和存储节点通过消息队列通讯和提供API的访问方式。每种运行在云控制器上的服务可以分开部署在不同的节点上，通过分开部署可以实现扩展性和可用性。</p>
+<p>硬件评估</p>
+<p>云控制器可以和计算节点配置一样，未来可以根据云类型和容量重新考虑硬件配置。云控制器也可以通过所有或部分的服务放入虚拟机进行管理，比如：消息队列。本书中我们假设所有服务直接运行的云控制节点的物理环境中。</p>
+<dl class="docutils">
+<dt>为了准确评估服务器配置，决定是否需要使用全部或部分虚拟化，你需要考虑一下因素：</dt>
+<dd>你估计有多少实例运行
+当前拥有多少物理机用于计算节点
+访问计算或存储服务的用户数量
+使用你云服务的用户是如何进行操作的，使用REST API还是通过用户仪表盘
+用户认证是否通过外部系统(如：LDAP，Active Directory)
+单个实例会保持运行多久</dd>
+</dl>
+<p>考虑因素                                            扩展考虑
+同时会有多少实例运行                      相应需要评估的有，数据库的容量，如果许多实例同时请求状态报告需要考虑单个多个云控制器，新实例启动时需要一定的计算能力。
+同时会有多少计算节点运行            确保消息队列服务可以处理相应容量的请求
+多少用户会使用API方式访问          如果许多用户发出多条请求，确保云控制器的CPU负载可以处理所有请求。
+多少用户会使用仪表板方式访问  仪表盘方式会发送会比API方式发送更多的请求，所以当仪表盘方式是用户主要的操作界面则需要添加更多CPU的计算能力。
+同时有多少的nova-api服务在运行     使用一个CPU核心对应一个服务的方式评估云控制器。
+单个实例会运行多久                               开始和删除一个实例是在计算节点上处理，但云控制器需要在期间处理API查询和调度控制。
+用户认证是否在外部实现                     确保云控制器和外部认证系统间的网络连接正常，且云控制器的CPU有能力处理相应的请求。</p>
+<p>分布服务</p>
+<p>在我们的样例中，相关的服务都是集中安装在一个物理节点上。但在实际应用中较好的建议是将服务分布到不同的物理节点上。以下是一些我们见到过的部署场景和相应的说明。</p>
+<blockquote>
+<div>将glance-<a href="#id4"><span class="problematic" id="id5">*</span></a>和swift-proxy运行在一起：对象存储代理服务所需的IO操作较少，所以相应的Glance的镜像服务可以从物理硬件上获益，同时后端对象存储也有较好的连接性。
+运行一个集中专用的数据库服务器：使用专用集中的服务器为其他所有服务提供数据库服务。这种简化方式隔离了数据库升级并允许数据库建立从库以实现Failover。
+每个服务运行于一个虚拟机中：在一组运行KVM的服务器中集中部署服务。每个服务对应安装在一个虚拟机中（如：nova-scheduler, rabbitmq,数据库等）。在安装时很难知道在实际运行过程中不同的服务承担的负荷请求，通过这种部署方式下可按照实际服务请求负荷给不同虚拟机分配不同资源来调整实际物理资源的使用。
+使用外部的均衡负载：这种部署方式采用专用的昂贵均衡负载硬件，在多台不同的物理硬件上运行nova-api和swift-proxy服务，并通过均衡负载硬件将请求分布到不同的硬件环境上。</div></blockquote>
+<p>最常见的一个选择是是否需要使用虚拟化。有些服务如：nova-compute，swift-proxy和swift-object服务不应运行于虚拟化环境中。但是，云控制相关服务通常都可以运行在虚拟化环境中。运行在虚拟化环境中有一定的性能损失，但是相应可以运行更多的服务。</p>
+<p>数据库
+大部分的OpenStack集中服务使用数据库保存统计信息(目前也包括nova-compute节点)。不能访问数据库服务就会导致系统报错。所以，我们建议通过建立数据库集群方式防止数据库的单点故障。</p>
+<p>消息队列
+大部分的OpenStack服务间使用消息队列方式进行通讯。通常，如果消息队列发生故障或无法访问，OpenStack会系统挂起，最后进入只读状态，该状态下的所有信息就是最后收到的消息所保留的状态。所以我们建议消息队列需要建立在集群的架构上，并RabbitMQ内建支持集群部署。</p>
+<p>API
+所有的公共访问方式，不管是直接的，通过命令行方式或通过基于web的仪表盘方式都是通过API服务实现。详细的API信息可以访问http://api.openstack.org/</p>
+<p>你需要在是否兼容Amazon EC2 API和只支持OpenStack API之间进行选择。当同时使用2种API时常见的不兼容问题涉及到镜像和实例的使用。比如：EC2 API使用包含16进制的ID来标示实例，但OpenStack API使用名字和数字标示。类似情况还有，EC2 API更多的依赖于DNS解析的别名和实例进行连接，而OpenStack则使用IP地址。如果OpenStack没有使用正确方式进行配置，通常的情况就是用户无法访问他们的实例。尽管兼容EC2 API方式存在问题，但是方式下能协助用户从Amazon云迁移到OpenStack上。</p>
+<p>就像数据库和消息队列服务，能有多于1个API服务的节点总是件好事。常用的HTTP负载均衡技术也可以实现对于nova-api服务的高可用性。</p>
+<p>扩展
+API说明文档(<a class="reference external" href="http://docs.openstack.org/api/api-specs.html">http://docs.openstack.org/api/api-specs.html</a>)定义了核心组建，功能和媒体类型。客户端软件可以始终依赖于核心API。OpenStack将一直完整支持该API。通过严格遵循核心API，使得客户端可以使用相同的API在多个不同版本上实现基本一致的功能。</p>
+<p>OpenStack API具有扩展性。可通过对于API的扩展增加核心API不具有的功能。新功能的引入，如：MIME类型，动作，状态，头，参数和资源，都通过扩展核心API实现。扩展可以在现有基础上增加新功能而不需要等待新版本，同时也允许供应商提供定制化的功能服务。</p>
+<p>调度器
+将不同配置的虚拟机调度安排运行在不同性能的物理计算节点上是一个极富挑战的问题，通常该问题也是计算机科学中所涉及到的一系列研究课题。目前有多种技术用于处理调度。其中有：按照虚拟机的配置线性测量法，将物理节点容量均衡分段法等。如何解决调度问题的算法已超出本书范围。OpenStack提供了几种不同的调度引擎，通过访问(<a class="reference external" href="http://docs.openstack.org/folsom/openstack-compute/admin/content/ch_scheduling.html">http://docs.openstack.org/folsom/openstack-compute/admin/content/ch_scheduling.html</a>)可以获得详细的调度器说明文档。</p>
+<p>出于可用性，大规模部署或高频度调度下，你应该考虑选择使用多个nova-scheduler服务。nova-scheduler服务完全使用消息队列通讯，所以不需要使用负载均衡设备。</p>
+<p>镜像
+OpenStack镜像分类和交付服务由2部分glance-api和glance-registry组成。前一部分是用于提供镜像交付和计算节点下载镜像文件用途。后一部分则维护了镜像文件的相关元数据信息，该部分服务需要数据库支持。</p>
+<dl class="docutils">
+<dt>glance-api部分是一个抽象层，它支持多种的后端存储方式。目前支持的有：</dt>
+<dd>OpenStack对象存储：将镜像文件已对象的方式进行存储
+文件系统：使用普通的文件系统存放镜像文件
+S3：从Amazon S3服务上获取镜像（该方式下镜像文件为只读，不能写入镜像）
+HTTP：从Web服务器上获取镜像（该方式下镜像文件为只读，不能写入镜像）</dd>
+</dl>
+<p>如果你已有OpenStack对象存储服务，我们建议你使用对象存储服务来存放镜像。对象存储服务具有良好的扩展性。除非你不需要通过OpenStack上传镜像，否则只有文件系统可以作为实用的选择。</p>
+<p>仪表盘
+OpenStack仪表盘使用的是运行在Apache httpd服务上的Python web应用。所以，你可以和其他web应用一样的维护方式，确保仪表盘应用可以通过网络访问API服务(包括管理endpoints)。</p>
+<p>认证和授权
+OpenStack中的认证和授权概念和其他常用系统中的一致。用户使用安全凭证(如：用户名和密码)进行认证。用户可以属于一个或多个组(在OpenStack中称作项目或租户)。比如：一个云系统管理员可以列出所有云中运行的实例，而一个普通用户只能看到他所属组的实例。资源配额(比如可以使用的CPU内核数，磁盘空间等)是和项目相关联的。</p>
+<p>OpenStack身份服务(Keystone)提供用户认证和用户属性信息。该服务也为其他的OpenStack服务提供认证。可通过文件policy.json配置策略，请参见用户支持章节获得更多如何配置信息。</p>
+<dl class="docutils">
+<dt>身份服务通过不同的插件支持不同的后端认证方式。后端认证方式范围从单纯存储到外部系统，包括：</dt>
+<dd>基于内存的Key-Value存储
+SQL数据库
+PAM
+LDAP</dd>
+</dl>
+<p>许多部署方案采用SQL数据库的方式作为认证架构集成入OpenStack。LDAP也是一种常用的认证机制。</p>
+<p>网络评估
+由于云控制器集中了很多不同的服务，所以云控制器相应的网络通讯产生的流量也很多。比如：如果将OpenStack的镜像服务安装在云控制器上，云控制器需要能以可接受的网速传输镜像文件。</p>
+<p>另一个例子是，当你选择使用单主机网络，云控制器将成为所有实例的网关。这种情况下，云控制器必须能支持处理所有从Internet进出的网络访问流量。</p>
+<p>建议采用高速网卡，如：10gb网卡。你也可以同时使用2张10gb网卡，并将它们绑定在一起。在双网卡绑定下总带宽不是总能达到20gb，不同的数据传输流将使用不同的网卡。比如：当云控制器正在传输2个镜像文件，每个文件将各自使用一张网卡进行传输，这种情况下，充分利用了各自的10gb带宽。</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Architecture</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/Architecture/Cloud Controller Design.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Architecture"
+             >previous</a> |</li>
+        <li><a href="../index.html">OpenStackOperationsGuide 1.0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Architecture</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, TryStack.cn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

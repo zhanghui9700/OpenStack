@@ -1,0 +1,12 @@
+﻿如何贡献本书
+====================================================
+
+
+
+本书的编写由个人发起，在阅读的同时我们也希望你能为本书做出贡献。OpenStack文档符合编码准则中涉及的迭代开发，bug跟踪，审查和固化。
+
+如果你在本书中发现Bug或希望能为某章节做出贡献，可以通过访问OpenStack Booktype网站(http://openstack.booktype.pro)，在注册用户账号后，开始编辑相应的章节。本书电子版可以访问(http://openstack.booktype.pro/openstack-operations-guide/)。
+
+来自OpenStack核心文档团队成员之一定期发布本书的最新完整版本。我们计划在OpenStack Summits上特设专人负责该项目。
+
+如果你不能立即修改或不能确认是否确实是文档bug，请在OpenStack Manuals(http://bugs.launchpad.net/openstack-manuals)上提交该bug并在Extra选项中标示名称为"opsguide"的tag。当你发现可以修正或改善的地方，就可以给自己分配工作任务。同时，OpenStack核心文档团队也会根据文档bug的重要程度进行分类。通过文档How To说明(http://wiki.openstack.org/Documentation/HowTo)你可以了解到更多关于文档工作流程的相关信息。

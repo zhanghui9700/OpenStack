@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to OpenStackOperationsGuide's documentation!
+架构
 ====================================================
 
 Contents:
@@ -11,15 +11,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
+   Cloud Controller Design
    
-   Introduction/index
-   Architecture/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 

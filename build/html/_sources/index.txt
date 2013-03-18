@@ -1,5 +1,5 @@
 .. OpenStackOperationsGuide documentation master file, created by
-   sphinx-quickstart on Tue Mar 19 01:32:30 2013.
+   sphinx-quickstart on Tue Mar 19 03:24:23 2013.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -12,9 +12,9 @@ Contents:
    :maxdepth: 2
 
 
-Introduction-Why We Wrote This Book
-Introduction-How to Work on This Book
-Architecture-Cloud Controller Design
+   
+   Introduction/index
+   Architecture/index
 
 Indices and tables
 ==================

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # OpenStackOperationsGuide documentation build configuration file, created by
-# sphinx-quickstart on Tue Mar 19 01:32:30 2013.
+# sphinx-quickstart on Tue Mar 19 03:24:23 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -41,14 +41,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'OpenStackOperationsGuide'
-copyright = u'2013, Trystack.cn'
+copyright = u'2013, TryStack.cn'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '1.0.1'
+version = '1.0'
 # The full version, including alpha/beta/rc tags.
 release = '1.0.1'
 
@@ -184,7 +184,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'OpenStackOperationsGuide.tex', u'OpenStackOperationsGuide Documentation',
-   u'Trystack.cn', 'manual'),
+   u'TryStack.cn', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -214,7 +214,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'openstackoperationsguide', u'OpenStackOperationsGuide Documentation',
-     [u'Trystack.cn'], 1)
+     [u'TryStack.cn'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -228,7 +228,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'OpenStackOperationsGuide', u'OpenStackOperationsGuide Documentation',
-   u'Trystack.cn', 'OpenStackOperationsGuide', 'One line description of project.',
+   u'TryStack.cn', 'OpenStackOperationsGuide', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -246,9 +246,9 @@ texinfo_documents = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'OpenStackOperationsGuide'
-epub_author = u'Trystack.cn'
-epub_publisher = u'Trystack.cn'
-epub_copyright = u'2013, Trystack.cn'
+epub_author = u'TryStack.cn'
+epub_publisher = u'TryStack.cn'
+epub_copyright = u'2013, TryStack.cn'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
