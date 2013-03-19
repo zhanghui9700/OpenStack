@@ -11,7 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Cloud Controller Design
-   Provisioning and Deploying
+   Cloud Controller Design 
+   Provisioning and Deploying 
    
 
