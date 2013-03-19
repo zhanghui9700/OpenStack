@@ -1,0 +1,163 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>配置和部署 &mdash; OpenStackOperationsGuide 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="OpenStackOperationsGuide 1.0.1 documentation" href="../index.html" />
+    <link rel="up" title="架构" href="index.html" />
+    <link rel="prev" title="云控制器设计" href="Cloud Controller Design.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="Cloud Controller Design.html" title="云控制器设计"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">OpenStackOperationsGuide 1.0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">架构</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>配置和部署<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>云计算的可扩展性的一个关键部分就是运营它所需要的工作量。为了降低你的运营成本，需要设置和使用自动部署和配置设施。这包括系统自动安装操作系统的初始配置，并自动集中式协调配置所有服务，从而减少手动工作量和出错的机会。</p>
+<div class="section" id="id2">
+<h2>自动部署<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>自动化的部署系统在新的服务器上安装和配置操作系统，无需干预，在最精简的手动工作之后（如服务器上架，MAC IP分配，电源配置等等）。典型的解决方案依赖于PXE引导和TFTP服务器来做最基本的操作系统安装，然后切换到自动配置管理系统。</p>
+<p>Ubuntu和Red Hat Linux中都有相关机制用于配置操作系统，包括预置和kickstart，并可以通过网络启动。通常，这些被用于引导一个自动化的配置系统。或者，您可以使用基于图像的方法来部署操作系统，如systemimager。您可以在虚拟化的基础设施中使用这两种方法，比如当你运行虚拟机分离控制服务和物理基础设施时。</p>
+<p>当你创建一个部署计划时，需要关注在一些重要的领域，因为他们部署后都非常难以改动。</p>
+</div>
+<div class="section" id="raid">
+<h2>磁盘分区和RAID<a class="headerlink" href="#raid" title="Permalink to this headline">¶</a></h2>
+<p>任何操作系统的基础都离不开硬盘驱动器，因为操作系统都需要安装在硬盘上。</p>
+<p>在服务器上的硬盘驱动器上，您必须完成以下配置：</p>
+<blockquote>
+<div>分区
+添加到RAID阵列</div></blockquote>
+<p>最简单的方法是使用一个有以下两个分区的硬盘：</p>
+<blockquote>
+<div>文件系统
+交换空间</div></blockquote>
+<p>该设置不使用RAID。</p>
+<p>注：此选项不建议用于生产环境，因为如果硬盘出现故障，那整个服务器都会down掉。相反，我们建议您使用一个以上的硬盘。磁盘的数量取决于需要建立什么类型的RAID阵列。</p>
+<p>我们建议您选择以下磁盘选项：</p>
+<blockquote>
+<div>选项​​1：分区中的所有驱动器以同样的方式水平排列，如下图所示：</div></blockquote>
+<p>使用此选项，您可以指定不同的分区到不同的RAID阵列。您可以分配磁盘1和2的分区1到/boot分区镜像。还可以让所有磁盘的分区2到根分区镜像。同样可以使用所有硬盘的分区3作为一个cinder-volumes LVM分区运行在一个RAID 10阵列。</p>
+<p>你最终可能会有未使用的分区，如在这个例子中的磁盘三和四的分区1，它允许最大化利用磁盘空间。 I / O性能可能是一个问题，因为正在使用的所有磁盘用来运行所有任务。</p>
+<blockquote>
+<div><p>选项​​2：添加一个大型RAID阵列，基于硬件或软件的所有原始磁盘。你可以引导，根，交换，和LVM分区这座大阵。此选项很容易实现和使用的所有分区。但是，磁盘I / O可能会受到影响。</p>
+<p>选项​​3：给整个磁盘特定的分区。例如，你可以分配磁盘1和2全部作为RAID 1下的引导、根分区和交换分区镜像。然后，分配磁盘3和4全部作为RAID 1下的LVM分区。由于I / O专注于专门的任务，所以磁盘I / O应该会更好。当然，在LVM的分区会小很多。</p>
+</div></blockquote>
+<p>作为大多数体系结构的选择，正确的答案取决于您自己的环境。</p>
+</div>
+<div class="section" id="id3">
+<h2>网络配置<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>网络配置是一个非常大的话题，跨越这本书的多个主题。现在，请确保您的服务器能够PXE启动，并能成功地与部署服务器进行通信。</p>
+<p>例如，当PXE启动时通常无法配置VLAN的网卡。此外，通常不能PXE启动bonded NICs。这种情况下，可以考虑在专用网络中使用一个简单的1 GB交换机，只有你的云可以与之通讯。</p>
+</div>
+<div class="section" id="id4">
+<h2>自动配置<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>自动配置管理的目的是建立和维护系统的一致性，不需要人为干预。希望保持部署一致，这样就可以每次都具有相同的云配置，并可再现你的云环境。正确使用自动配置管理工具，确保云计算系统的各组成部分是在特定的状态下，除了简化了部署和配置更改传播。这些工具也可以测试和回滚变更，因为它们是完全可重复的。可喜的是，在这个领域里很多工作已经由OpenStack社区完成。Puppet -一个配置管理工具 - 甚至还提供了OpenStack的官方模块。</p>
+<p>配置管理系统不可分割的一个组成部分就是它控制的项目。您应仔细考虑你想要的所有的项目，需不需要自动管理。</p>
+</div>
+<div class="section" id="id5">
+<h2>远程管理<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>根据我们的经验，大多数管理员并不坐在运行云计算的服务器旁，而且有许多人不一定喜欢访问数据中心。 OpenStack应该完全通过远程配置，但有时不是一切都按计划进行的。在这种情况下，有一个带外访问（out-of-band）的到的节点运行OpenStack的组件将是一个福音。而IPMI协​​议是事实上的标准，需要硬件支持，所以强烈推荐，以实现无人值守的数据中心。</p>
+<p>此外，同样需要考虑远程电源管理。虽然IPMI能控制服务器的电源状态，当一切都失效时能够远程访问到服务器的PDU才是最后的守护神。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">配置和部署</a><ul>
+<li><a class="reference internal" href="#id2">自动部署</a></li>
+<li><a class="reference internal" href="#raid">磁盘分区和RAID</a></li>
+<li><a class="reference internal" href="#id3">网络配置</a></li>
+<li><a class="reference internal" href="#id4">自动配置</a></li>
+<li><a class="reference internal" href="#id5">远程管理</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Cloud Controller Design.html"
+                        title="previous chapter">云控制器设计</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/Architecture/Provisioning and Deploying.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="Cloud Controller Design.html" title="云控制器设计"
+             >previous</a> |</li>
+        <li><a href="../index.html">OpenStackOperationsGuide 1.0.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >架构</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, TryStack.cn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
