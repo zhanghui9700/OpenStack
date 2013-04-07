@@ -3,23 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to OpenStackOperationsGuide's documentation!
+运营
 ====================================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
-   
-   Introduction/index  
-   Architecture/index  
-   Operations/index  
-   Appendices/index  
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   Lay of the Land
+   Managing Projects and Users
+   User Facing Operations
+   Maintenance, Failures, and Debugging
+   Network Troubleshooting
+   Logging and Monitoring
+   Backup and Recovery
+   Customize
+   Upstream OpenStack 
 

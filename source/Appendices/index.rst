@@ -3,23 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to OpenStackOperationsGuide's documentation!
+Appendices
 ====================================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
+
    
-   Introduction/index  
-   Architecture/index  
-   Operations/index  
-   Appendices/index  
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   Use Cases
+   Tales From the Cryp^H^H^H^H Cloud
+   Recommended Reading
+   Glossary
 

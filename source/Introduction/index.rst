@@ -11,7 +11,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   
    Why We Wrote This Book
    How to Work on This Book
 
